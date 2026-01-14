@@ -1,0 +1,52 @@
+//
+//  NoInternetConnectionView.swift
+//
+
+import UIKit
+
+class NoInternetConnectionView: UIView {
+
+    static let sharedNoInternetMode: NoInternetConnectionView = {
+
+        let view = NoInternetConnectionView()
+        let noInternetView = view.setUpNoInternetView()
+        return noInternetView
+    }()
+
+    var blockForRemove: (() -> Void)?
+
+    @IBOutlet weak var lblNoInternet: UILabel!
+    @IBOutlet weak var btnTryAgain: UIButton!
+    @IBOutlet weak var lblNoConnection: UILabel!
+
+    func setUpNoInternetView() -> NoInternetConnectionView {
+
+        let noInternetView: NoInternetConnectionView = .initFromNib()
+        return noInternetView
+    }
+}
+
+// MARK: - General Methods -
+
+extension NoInternetConnectionView {
+
+    func show() {
+
+//        self.frame = CGRect(x: 0.0, y: 0.0, width: CScreenWidth, height: CScreenHeight)
+//        appDelegate.window?.addSubview(self)
+
+        self.lblNoInternet.text = "CNoInternetConn" == "" ? "Check your wifi or mobile data connection" : "CNoInternetConn"
+        self.lblNoConnection.text = "CNoConnection" == "" ? "No Connection" : "CNoConnection"
+        self.btnTryAgain.setTitle("CTryAgain" == "" ? "Try Again" : "CTryAgain", for: .normal)
+    }
+}
+
+// MARK: - Action Events -
+extension NoInternetConnectionView {
+
+    @IBAction func btnTryAgainClicked(_ sender: UIButton) {
+
+        // self.removeFromSuperview()
+        // self.blockForRemove?()
+    }
+}

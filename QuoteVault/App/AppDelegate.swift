@@ -7,14 +7,21 @@
 
 import UIKit
 import CoreData
+import IQKeyboardManagerSwift
+import IQKeyboardToolbarManager
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-
+    var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        
+        UIViewController.swizzleViewDidAppear
+        
+        IQKeyboardManager.shared.isEnabled = true
+        IQKeyboardManager.shared.resignOnTouchOutside = true
+        IQKeyboardManager.shared.enableAutoToolbar = true
         return true
     }
 
@@ -59,3 +66,91 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
+/// Helper function didFinishLaunchingWithOptions
+extension AppDelegate {
+    
+    /// iqKeyboard configration setup
+    func iqKeyboardSetup(isEnable:Bool) {
+        IQKeyboardManager.shared.isEnabled = true
+        IQKeyboardToolbarManager.shared.isEnabled = true
+        IQKeyboardToolbarManager.shared.toolbarConfiguration.tintColor = UIColor.white
+    }
+    
+    /// Theme setup
+    func initialTheameSetup() {
+        UITextField.appearance().tintColor = UIColor.white
+        UITextView.appearance().tintColor = UIColor.white
+    }
+    
+    /// setNavigationBarAppearance is used to set clear navigation bar appearance
+    func setNavigationBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.shadowColor = .clear
+        appearance.backgroundColor = .systemTeal
+        appearance.backgroundImage = nil
+        appearance.shadowImage = nil
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+    }
+    
+    /// setupNavigationController is used to set root view controller
+    /// - Parameter rootController: UIViewController type
+    func setupNavigationController(rootController: UIViewController) {
+        let navigationController: UINavigationController
+        // For TabBarVC, wrap it in navigation controller and show nav bar
+        if rootController is TabBarVC {
+            navigationController = UINavigationController(rootViewController: rootController)
+            navigationController.isNavigationBarHidden = false
+        } else {
+            navigationController = UINavigationController(rootViewController: rootController)
+            navigationController.isNavigationBarHidden = true
+        }
+        self.setWindowRootViewController(
+            rootVC: navigationController,
+            animated: false,
+            completion: nil)
+    }
+    
+    /// setWindowRootViewController is used to set root view
+    /// - Parameters:
+    ///   - rootVC: UIViewController optional type
+    ///   - animated: Bool type
+    ///   - completion: completion block
+    func setWindowRootViewController(
+        rootVC:UIViewController?,
+        animated:Bool,
+        completion: ((Bool) -> Void)?) {
+            guard rootVC != nil else {
+                return
+            }
+            self.window?.rootViewController = rootVC
+            completion?(true)
+        }
+    
+}
+
+/// Appdelegate Common Redirectionscreen for app
+extension AppDelegate {
+    
+    /// redirectToSplash is used to redirect to splash screen
+    func redirectToSplash() {
+        self.setupNavigationController(rootController: SplashVC.loadFromNib())
+    }
+    
+    /// redirectToSelectUserType is used to redirect to user type selection screen
+    func redirectToLogin() {
+//        clearLoginData()
+        self.setupNavigationController(rootController: LoginVC.loadFromNib())
+    }
+    
+    func redirectToSignup() {
+        self.setupNavigationController(rootController: RegisterVC.loadFromNib())
+        
+    }
+    
+    func redirectToHome() {
+        self.setupNavigationController(rootController: TabBarVC())
+    }
+}

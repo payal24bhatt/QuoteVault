@@ -13,10 +13,57 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        guard let _ = (scene as? UIWindowScene) else { return }
+        guard let windowScene = (scene as? UIWindowScene) else { return }
+        
+        let window = UIWindow(windowScene: windowScene)
+        Constants.appDelegate.window = window
+        
+        // Load and apply theme on app launch
+        ThemeManager.shared.loadAndApplyTheme()
+        
+        // Handle widget deep link
+        if let urlContext = connectionOptions.urlContexts.first {
+            handleWidgetURL(urlContext.url)
+        }
+        
+        // TEMP: show Home / Splash / Login
+        let rootVC = SplashVC.loadFromNib()
+        let nav = UINavigationController(rootViewController: rootVC)
+        
+        window.rootViewController = nav
+        self.window = window
+        window.makeKeyAndVisible()
+    }
+    
+    // Handle widget tap - opens app to home screen showing quote of the day
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        guard let url = URLContexts.first?.url else { return }
+        handleWidgetURL(url)
+    }
+    
+    private func handleWidgetURL(_ url: URL) {
+        // Widget URL scheme: quotevault://quoteoftheday
+        if url.scheme == "quotevault" && url.host == "quoteoftheday" {
+            // Navigate to home screen (which shows quote of the day)
+            DispatchQueue.main.async {
+                guard let window = self.window else { return }
+                
+                // Check if user is logged in
+                if SupabaseService.shared.isLoggedIn {
+                    // User is logged in - go directly to home
+                    let tabBarVC = TabBarVC()
+                    let nav = UINavigationController(rootViewController: tabBarVC)
+                    window.rootViewController = nav
+                    window.makeKeyAndVisible()
+                } else {
+                    // User not logged in - go to splash/login
+                    let rootVC = SplashVC.loadFromNib()
+                    let nav = UINavigationController(rootViewController: rootVC)
+                    window.rootViewController = nav
+                    window.makeKeyAndVisible()
+                }
+            }
+        }
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
