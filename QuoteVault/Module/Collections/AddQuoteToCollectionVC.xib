@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="24506" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="24504"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="AddQuoteToCollectionVC" customModule="QuoteVault" customModuleProvider="target">
+            <connections>
+                <outlet property="activityIndicator" destination="rMn-Eg-ApS" id="viI-xC-Uhu"/>
+                <outlet property="searchBar" destination="3jE-cn-HHC" id="9oH-kJ-ehT"/>
+                <outlet property="tblQuotes" destination="aY8-2X-lhe" id="tWq-YL-aVw"/>
+                <outlet property="view" destination="Q39-Y3-ogM" id="31T-5C-jZN"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="Q39-Y3-ogM">
+            <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <searchBar contentMode="redraw" translatesAutoresizingMaskIntoConstraints="NO" id="3jE-cn-HHC">
+                    <rect key="frame" x="0.0" y="170" width="393" height="64"/>
+                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <color key="barTintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <textInputTraits key="textInputTraits"/>
+                </searchBar>
+                <tableView clipsSubviews="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" bouncesZoom="NO" style="plain" separatorStyle="none" allowsSelection="NO" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="-1" estimatedSectionHeaderHeight="-1" sectionFooterHeight="-1" estimatedSectionFooterHeight="-1" translatesAutoresizingMaskIntoConstraints="NO" id="aY8-2X-lhe">
+                    <rect key="frame" x="0.0" y="242" width="393" height="610"/>
+                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <connections>
+                        <outlet property="dataSource" destination="-1" id="TAA-cf-atX"/>
+                        <outlet property="delegate" destination="-1" id="Zyc-CL-4Bg"/>
+                    </connections>
+                </tableView>
+                <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" animating="YES" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="rMn-Eg-ApS">
+                    <rect key="frame" x="186.66666666666666" y="416" width="20" height="20"/>
+                </activityIndicatorView>
+            </subviews>
+            <viewLayoutGuide key="safeArea" id="7wd-wf-hf8"/>
+            <color key="backgroundColor" systemColor="systemGroupedBackgroundColor"/>
+            <constraints>
+                <constraint firstItem="aY8-2X-lhe" firstAttribute="leading" secondItem="7wd-wf-hf8" secondAttribute="leading" id="H8o-ks-WC0"/>
+                <constraint firstItem="rMn-Eg-ApS" firstAttribute="centerX" secondItem="Q39-Y3-ogM" secondAttribute="centerX" id="ROh-XX-yLF"/>
+                <constraint firstItem="3jE-cn-HHC" firstAttribute="top" secondItem="Q39-Y3-ogM" secondAttribute="top" constant="170" id="SGY-4f-7IR"/>
+                <constraint firstItem="7wd-wf-hf8" firstAttribute="trailing" secondItem="aY8-2X-lhe" secondAttribute="trailing" id="ZTB-eq-Vqq"/>
+                <constraint firstItem="rMn-Eg-ApS" firstAttribute="centerY" secondItem="Q39-Y3-ogM" secondAttribute="centerY" id="aIQ-MU-nZB"/>
+                <constraint firstAttribute="bottom" secondItem="aY8-2X-lhe" secondAttribute="bottom" id="jEq-tL-qOM"/>
+                <constraint firstItem="aY8-2X-lhe" firstAttribute="top" secondItem="3jE-cn-HHC" secondAttribute="bottom" constant="8" id="jLV-Qj-mG0"/>
+                <constraint firstItem="3jE-cn-HHC" firstAttribute="leading" secondItem="7wd-wf-hf8" secondAttribute="leading" id="nBA-0K-dL9"/>
+                <constraint firstItem="7wd-wf-hf8" firstAttribute="trailing" secondItem="3jE-cn-HHC" secondAttribute="trailing" id="qIO-UW-eB7"/>
+            </constraints>
+            <point key="canvasLocation" x="20" y="5"/>
+        </view>
+    </objects>
+    <resources>
+        <systemColor name="systemGroupedBackgroundColor">
+            <color red="0.94901960780000005" green="0.94901960780000005" blue="0.96862745100000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+    </resources>
+</document>

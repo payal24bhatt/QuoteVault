@@ -317,6 +317,23 @@ final class QuoteRepository {
     }
     
     func addQuoteToCollection(collectionId: UUID, quoteId: UUID) async throws {
+        // Check if quote already exists in collection to prevent duplicates
+        struct CollectionQuoteCheck: Decodable {
+            let id: UUID
+        }
+        
+        let existing: [CollectionQuoteCheck] = try await client.database
+            .from("collection_quotes")
+            .select("id")
+            .eq("collection_id", value: collectionId)
+            .eq("quote_id", value: quoteId)
+            .execute()
+            .value
+        
+        if !existing.isEmpty {
+            throw NSError(domain: "QuoteRepository", code: 409, userInfo: [NSLocalizedDescriptionKey: "Quote already exists in this collection"])
+        }
+        
         struct CollectionQuoteInsert: Encodable {
             let collection_id: UUID
             let quote_id: UUID
@@ -330,11 +347,29 @@ final class QuoteRepository {
     }
     
     func removeQuoteFromCollection(collectionId: UUID, quoteId: UUID) async throws {
+        // Fetch the specific collection_quote entry ID to delete only one instance
+        struct CollectionQuoteRow: Decodable {
+            let id: UUID
+        }
+        
+        let rows: [CollectionQuoteRow] = try await client.database
+            .from("collection_quotes")
+            .select("id")
+            .eq("collection_id", value: collectionId)
+            .eq("quote_id", value: quoteId)
+            .limit(1)
+            .execute()
+            .value
+        
+        guard let rowToDelete = rows.first else {
+            throw NSError(domain: "QuoteRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "Quote not found in collection"])
+        }
+        
+        // Delete by specific ID to ensure only one instance is deleted
         try await client.database
             .from("collection_quotes")
             .delete()
-            .eq("collection_id", value: collectionId)
-            .eq("quote_id", value: quoteId)
+            .eq("id", value: rowToDelete.id)
             .execute()
     }
     

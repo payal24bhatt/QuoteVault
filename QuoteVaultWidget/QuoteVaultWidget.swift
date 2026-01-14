@@ -116,36 +116,36 @@ struct QuoteEntry: TimelineEntry {
 struct QuoteVaultWidgetEntryView: View {
     var entry: QuoteProvider.Entry
     
+    @Environment(\.colorScheme) var colorScheme
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            
             Text("QUOTE OF THE DAY")
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.gray)
-                .padding(.bottom, 2)
+                .foregroundColor(.secondary)
+                .privacySensitive(false)
             
             Text(entry.quote.text)
-                .font(.system(size: 16, weight: .regular))
+                .font(.system(size: 15))
                 .foregroundColor(.primary)
-                .lineLimit(5)
-                .minimumScaleFactor(0.8)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .lineLimit(4)
+                .privacySensitive(false)   // ⭐ IMPORTANT
             
-            Spacer()
+            Spacer(minLength: 4)
             
             Text("— \(entry.quote.author)")
-                .font(.system(size: 12, weight: .regular))
-                .foregroundColor(.gray)
-                .lineLimit(1)
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+                .privacySensitive(false)   // ⭐ IMPORTANT
         }
-        .padding(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12))
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background() // This will use the container background
+        .padding(12)
     }
 }
 
 // MARK: - Widget Configuration
 struct QuoteVaultWidget: Widget {
-    let kind: String = "QuoteVaultWidget"
+    let kind = "QuoteVaultWidget"
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: QuoteProvider()) { entry in
@@ -154,13 +154,12 @@ struct QuoteVaultWidget: Widget {
                     .containerBackground(.fill.tertiary, for: .widget)
             } else {
                 QuoteVaultWidgetEntryView(entry: entry)
-                    .padding()
-                    .background()
+                    .background(Color(.systemBackground))
             }
         }
         .configurationDisplayName("Quote of the Day")
-        .description("Displays today's inspiring quote. Updates daily.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .description("Displays today's inspiring quote.")
+        .supportedFamilies([.systemMedium]) // ⚠️ IMPORTANT
     }
 }
 

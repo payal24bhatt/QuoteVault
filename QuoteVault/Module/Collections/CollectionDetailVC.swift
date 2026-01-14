@@ -23,6 +23,12 @@ class CollectionDetailVC: UIViewController {
         loadQuotes()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Reload quotes when returning from AddQuoteToCollectionVC
+        loadQuotes()
+    }
+    
     func prepareUI() {
         title = collection.name
         
@@ -32,21 +38,32 @@ class CollectionDetailVC: UIViewController {
             action: #selector(addQuote)
         )
         
-        tblQuotes.delegate = self
-        tblQuotes.dataSource = self
-        tblQuotes.register(UINib(nibName: "QuoteCell", bundle: nil), forCellReuseIdentifier: "QuoteCell")
-        tblQuotes.rowHeight = UITableView.automaticDimension
-        tblQuotes.estimatedRowHeight = 120
-        activityIndicator.hidesWhenStopped = true
+        // Safely configure outlets with nil checks
+        if let tblQuotes = tblQuotes {
+            tblQuotes.delegate = self
+            tblQuotes.dataSource = self
+            tblQuotes.register(UINib(nibName: "QuoteCell", bundle: nil), forCellReuseIdentifier: "QuoteCell")
+            tblQuotes.rowHeight = UITableView.automaticDimension
+            tblQuotes.estimatedRowHeight = 120
+        }
         
-        emptyStateLabel.text = "No quotes in this collection.\nAdd quotes to get started!"
-        emptyStateLabel.textAlignment = .center
-        emptyStateLabel.numberOfLines = 0
-        emptyStateView.isHidden = true
+        if let activityIndicator = activityIndicator {
+            activityIndicator.hidesWhenStopped = true
+        }
+        
+        if let emptyStateLabel = emptyStateLabel {
+            emptyStateLabel.text = "No quotes in this collection.\nAdd quotes to get started!"
+            emptyStateLabel.textAlignment = .center
+            emptyStateLabel.numberOfLines = 0
+        }
+        
+        if let emptyStateView = emptyStateView {
+            emptyStateView.isHidden = true
+        }
     }
     
     @objc func addQuote() {
-        let vc = AddQuoteToCollectionVC()
+        let vc = AddQuoteToCollectionVC.loadFromNib()
         vc.collectionId = collection.id
         vc.onQuoteAdded = { [weak self] in
             self?.loadQuotes()
@@ -57,20 +74,20 @@ class CollectionDetailVC: UIViewController {
     func loadQuotes() {
         let collectionId = collection.id
         
-        activityIndicator.startAnimating()
+        activityIndicator?.startAnimating()
         
         Task {
             do {
                 let quotes = try await QuoteRepository.shared.fetchCollectionQuotes(collectionId: collectionId)
                 DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
+                    self.activityIndicator?.stopAnimating()
                     self.quotes = quotes
-                    self.tblQuotes.reloadData()
+                    self.tblQuotes?.reloadData()
                     self.updateEmptyState()
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
+                    self.activityIndicator?.stopAnimating()
                     self.alertView(message: "Failed to load quotes: \(error.localizedDescription)")
                     self.updateEmptyState()
                 }
@@ -80,8 +97,8 @@ class CollectionDetailVC: UIViewController {
     
     func updateEmptyState() {
         let isEmpty = quotes.isEmpty
-        emptyStateView.isHidden = !isEmpty
-        tblQuotes.isHidden = isEmpty
+        emptyStateView?.isHidden = !isEmpty
+        tblQuotes?.isHidden = isEmpty
     }
     
     func removeQuote(_ quote: Quote, at indexPath: IndexPath) {

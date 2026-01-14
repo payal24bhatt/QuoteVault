@@ -25,6 +25,14 @@ class CollectionsVC: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        // Re-ensure delegate is set (in case outlets weren't ready in viewDidLoad)
+        if let tblCollections = tblCollections {
+            if tblCollections.delegate !== self {
+                tblCollections.delegate = self
+                tblCollections.dataSource = self
+                tblCollections.allowsSelection = true
+            }
+        }
         loadCollections()
     }
     
@@ -41,15 +49,37 @@ class CollectionsVC: UIViewController {
             action: #selector(createCollection)
         )
         
-        tblCollections.delegate = self
-        tblCollections.dataSource = self
-        tblCollections.register(UITableViewCell.self, forCellReuseIdentifier: "CollectionCell")
-        activityIndicator.hidesWhenStopped = true
+        // Safely configure outlets with nil checks
+        if let tblCollections = tblCollections {
+            tblCollections.delegate = self
+            tblCollections.dataSource = self
+            tblCollections.register(UITableViewCell.self, forCellReuseIdentifier: "CollectionCell")
+            tblCollections.allowsSelection = true
+            tblCollections.allowsMultipleSelection = false
+            tblCollections.isUserInteractionEnabled = true
+            print("✅ CollectionsVC: Table view configured successfully")
+        } else {
+            print("⚠️ CollectionsVC: tblCollections outlet is nil! Check XIB connections.")
+        }
         
-        emptyStateLabel.text = "No collections yet.\nCreate a collection to organize your favorite quotes!"
-        emptyStateLabel.textAlignment = .center
-        emptyStateLabel.numberOfLines = 0
-        emptyStateView.isHidden = true
+        // Ensure empty state view doesn't block touches
+        if let emptyStateView = emptyStateView {
+            emptyStateView.isUserInteractionEnabled = false
+        }
+        
+        if let activityIndicator = activityIndicator {
+            activityIndicator.hidesWhenStopped = true
+        }
+        
+        if let emptyStateLabel = emptyStateLabel {
+            emptyStateLabel.text = "No collections yet.\nCreate a collection to organize your favorite quotes!"
+            emptyStateLabel.textAlignment = .center
+            emptyStateLabel.numberOfLines = 0
+        }
+        
+        if let emptyStateView = emptyStateView {
+            emptyStateView.isHidden = true
+        }
     }
     
     @objc func createCollection() {
@@ -88,25 +118,25 @@ class CollectionsVC: UIViewController {
     
     func loadCollections() {
         guard let userId = currentUserId else {
-            emptyStateView.isHidden = false
-            tblCollections.isHidden = true
+            emptyStateView?.isHidden = false
+            tblCollections?.isHidden = true
             return
         }
         
-        activityIndicator.startAnimating()
+        activityIndicator?.startAnimating()
         
         Task {
             do {
                 let collections = try await QuoteRepository.shared.fetchCollections(userId: userId)
                 DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
+                    self.activityIndicator?.stopAnimating()
                     self.collections = collections
-                    self.tblCollections.reloadData()
+                    self.tblCollections?.reloadData()
                     self.updateEmptyState()
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.activityIndicator.stopAnimating()
+                    self.activityIndicator?.stopAnimating()
                     self.alertView(message: "Failed to load collections: \(error.localizedDescription)")
                     self.updateEmptyState()
                 }
@@ -116,8 +146,18 @@ class CollectionsVC: UIViewController {
     
     func updateEmptyState() {
         let isEmpty = collections.isEmpty
-        emptyStateView.isHidden = !isEmpty
-        tblCollections.isHidden = isEmpty
+        emptyStateView?.isHidden = !isEmpty
+        tblCollections?.isHidden = isEmpty
+        
+        // Ensure table view is not blocked by empty state view
+        if let emptyStateView = emptyStateView {
+            emptyStateView.isUserInteractionEnabled = false // Don't block touches
+        }
+        
+        // Ensure table view can receive touches
+        if let tblCollections = tblCollections {
+            tblCollections.isUserInteractionEnabled = true
+        }
     }
     
     func deleteCollection(_ collection: Collection, at indexPath: IndexPath) {
@@ -131,7 +171,7 @@ class CollectionsVC: UIViewController {
                     try await QuoteRepository.shared.deleteCollection(collectionId: collectionId)
                     DispatchQueue.main.async {
                         self?.collections.remove(at: indexPath.row)
-                        self?.tblCollections.deleteRows(at: [indexPath], with: .fade)
+                        self?.tblCollections?.deleteRows(at: [indexPath], with: .fade)
                         self?.updateEmptyState()
                     }
                 } catch {
@@ -152,6 +192,10 @@ extension CollectionsVC: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard indexPath.row < collections.count else {
+            return UITableViewCell()
+        }
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "CollectionCell", for: indexPath)
         let collection = collections[indexPath.row]
         cell.textLabel?.text = collection.name
@@ -161,15 +205,23 @@ extension CollectionsVC: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        print("✅ CollectionsVC: Cell tapped at row \(indexPath.row)")
         tableView.deselectRow(at: indexPath, animated: true)
+        guard indexPath.row < collections.count else {
+            print("⚠️ CollectionsVC: Index out of bounds")
+            return
+        }
         let collection = collections[indexPath.row]
-        let vc = CollectionDetailVC()
+        print("✅ CollectionsVC: Navigating to collection: \(collection.name)")
+        
+        let vc = CollectionDetailVC.loadFromNib()
         vc.collection = collection
         navigationController?.pushViewController(vc, animated: true)
     }
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
+            guard indexPath.row < collections.count else { return }
             let collection = collections[indexPath.row]
             deleteCollection(collection, at: indexPath)
         }
