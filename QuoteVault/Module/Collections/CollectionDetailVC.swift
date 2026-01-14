@@ -65,6 +65,7 @@ class CollectionDetailVC: UIViewController {
     @objc func addQuote() {
         let vc = AddQuoteToCollectionVC.loadFromNib()
         vc.collectionId = collection.id
+        vc.hidesBottomBarWhenPushed = true // Hide tab bar when navigating
         vc.onQuoteAdded = { [weak self] in
             self?.loadQuotes()
         }

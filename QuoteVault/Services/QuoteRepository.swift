@@ -440,19 +440,23 @@ final class QuoteRepository {
         return response.first
     }
     
-    func upsertSettings(userId: UUID, theme: String, fontSize: Int, accentColor: String) async throws {
+    func upsertSettings(userId: UUID, theme: String, fontSize: Int, accentColor: String, notificationEnabled: Bool? = nil, notificationTime: String? = nil) async throws {
         struct SettingsUpsert: Encodable {
             let user_id: UUID
             let theme: String
             let font_size: Int
             let accent_color: String
+            let notification_enabled: Bool?
+            let notification_time: String?
         }
         
         let settings = SettingsUpsert(
             user_id: userId,
             theme: theme,
             font_size: fontSize,
-            accent_color: accentColor
+            accent_color: accentColor,
+            notification_enabled: notificationEnabled,
+            notification_time: notificationTime
         )
         
         try await client.database

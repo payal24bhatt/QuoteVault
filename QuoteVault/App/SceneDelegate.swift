@@ -17,28 +17,87 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         let window = UIWindow(windowScene: windowScene)
         Constants.appDelegate.window = window
+        self.window = window
         
         // Load and apply theme on app launch
         ThemeManager.shared.loadAndApplyTheme()
         
-        // Handle widget deep link
+        // Handle deep links on app launch
         if let urlContext = connectionOptions.urlContexts.first {
-            handleWidgetURL(urlContext.url)
+            let url = urlContext.url
+            print("🔗 SceneDelegate: App launched with URL: \(url.absoluteString)")
+            print("🔗 URL scheme: \(url.scheme ?? "nil"), host: \(url.host ?? "nil")")
+            
+            // Check if it's a reset password URL
+            if url.scheme == "quotevault" {
+                let urlString = url.absoluteString.lowercased()
+                if url.host == "reset-password" || 
+                   url.path.contains("reset-password") ||
+                   urlString.contains("reset") && urlString.contains("password") {
+                    print("✅ Detected reset password URL in SceneDelegate")
+                    print("🔗 Full URL: \(url.absoluteString)")
+                    // Navigate to ResetPasswordVC
+                    DispatchQueue.main.async {
+                        if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
+                            appDelegate.redirectToResetPassword(with: url)
+                        }
+                    }
+                    window.makeKeyAndVisible()
+                    return
+                } else {
+                    // Handle widget URL
+                    handleWidgetURL(url)
+                }
+            }
         }
         
-        // TEMP: show Home / Splash / Login
+        // Check for pending reset URL from AppDelegate
+        if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+           let pendingURL = appDelegate.pendingResetURL {
+            print("✅ Using pending reset URL from AppDelegate")
+            DispatchQueue.main.async {
+                appDelegate.redirectToResetPassword(with: pendingURL)
+                appDelegate.pendingResetURL = nil
+            }
+            window.makeKeyAndVisible()
+            return
+        }
+        
+        // Default: show Home / Splash / Login
         let rootVC = SplashVC.loadFromNib()
         let nav = UINavigationController(rootViewController: rootVC)
         
         window.rootViewController = nav
-        self.window = window
         window.makeKeyAndVisible()
     }
     
     // Handle widget tap - opens app to home screen showing quote of the day
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
         guard let url = URLContexts.first?.url else { return }
-        handleWidgetURL(url)
+        
+        print("🔗 URL opened while app running: \(url.absoluteString)")
+        
+        // Check if it's a reset password URL
+        if url.scheme == "quotevault" {
+            let urlString = url.absoluteString.lowercased()
+            if url.host == "reset-password" || 
+               url.path.contains("reset-password") ||
+               (urlString.contains("reset") && urlString.contains("password")) {
+                print("✅ Detected reset password URL while app running")
+                print("🔗 Full URL: \(url.absoluteString)")
+                // Navigate to ResetPasswordVC with URL for token extraction
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self, let window = self.window else { return }
+                    if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
+                        appDelegate.redirectToResetPassword(with: url)
+                    }
+                }
+            } else {
+                handleWidgetURL(url)
+            }
+        } else {
+            handleWidgetURL(url)
+        }
     }
     
     private func handleWidgetURL(_ url: URL) {

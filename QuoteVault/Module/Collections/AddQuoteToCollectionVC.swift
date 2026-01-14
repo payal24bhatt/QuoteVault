@@ -19,12 +19,6 @@ class AddQuoteToCollectionVC: UIViewController {
     private var searchText: String?
     private var searchAuthor: String?
     
-    lazy var viewModel: HomeViewModel = {
-        let vm = HomeViewModel()
-        vm.delegate = self
-        return vm
-    }()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         prepareUI()
@@ -76,7 +70,29 @@ class AddQuoteToCollectionVC: UIViewController {
     
     func fetchQuotes() {
         activityIndicator?.startAnimating()
-        viewModel.fetchQuotes(reset: true, categoryId: nil, searchText: searchText, author: searchAuthor)
+        
+        Task {
+            do {
+                let fetchedQuotes = try await QuoteRepository.shared.fetchQuotes(
+                    limit: 100, // Fetch more quotes for selection
+                    offset: 0,
+                    categoryId: nil,
+                    searchText: searchText,
+                    author: searchAuthor
+                )
+                
+                DispatchQueue.main.async {
+                    self.activityIndicator?.stopAnimating()
+                    self.quotes = fetchedQuotes
+                    self.tblQuotes?.reloadData()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.activityIndicator?.stopAnimating()
+                    self.alertView(message: "Failed to load quotes: \(error.localizedDescription)")
+                }
+            }
+        }
     }
     
     func addQuoteToCollection(_ quote: Quote) {
@@ -136,24 +152,6 @@ extension AddQuoteToCollectionVC: UITableViewDataSource, UITableViewDelegate {
     }
 }
 
-extension AddQuoteToCollectionVC: HomeViewModelDelegate {
-    func quotesFetched(_ newQuotes: [Quote]) {
-        DispatchQueue.main.async {
-            self.activityIndicator?.stopAnimating()
-            self.quotes = newQuotes
-            self.tblQuotes?.reloadData()
-        }
-    }
-    
-    func quoteOfTheDayFetched(_ quote: Quote?) {}
-    
-    func errorOccurred(_ message: String) {
-        DispatchQueue.main.async {
-            self.activityIndicator?.stopAnimating()
-            self.alertView(message: message)
-        }
-    }
-}
 
 extension AddQuoteToCollectionVC: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Photos
 
 enum QuoteCardStyle {
     case minimal
@@ -205,8 +206,51 @@ class QuoteCardGenerator {
         )
     }
     
-    static func saveToPhotos(image: UIImage) {
-        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+    static func saveToPhotos(image: UIImage, completion: ((Bool, Error?) -> Void)? = nil) {
+        // Request photo library permission
+        PHPhotoLibrary.requestAuthorization { status in
+            guard status == .authorized || status == .limited else {
+                DispatchQueue.main.async {
+                    let error = NSError(domain: "QuoteCardGenerator", code: 403, userInfo: [NSLocalizedDescriptionKey: "Photo library access denied"])
+                    completion?(false, error)
+                    
+                    // Show error on main thread
+                    if let topVC = topMostViewController {
+                        let alert = UIAlertController(
+                            title: "Permission Required",
+                            message: "Please allow photo library access in Settings to save quote cards.",
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "Settings", style: .default) { _ in
+                            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(settingsURL)
+                            }
+                        })
+                        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                        topVC.present(alert, animated: true)
+                    }
+                }
+                return
+            }
+            
+            // Save image to photo library
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetChangeRequest.creationRequestForAsset(from: image)
+            }) { success, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        print("❌ Failed to save image: \(error.localizedDescription)")
+                        completion?(false, error)
+                    } else if success {
+                        print("✅ Image saved to photo library")
+                        completion?(true, nil)
+                    } else {
+                        let error = NSError(domain: "QuoteCardGenerator", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown error saving image"])
+                        completion?(false, error)
+                    }
+                }
+            }
+        }
     }
 }
 

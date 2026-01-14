@@ -49,11 +49,23 @@ class TabBarVC: UITabBarController {
     }
     
     func loadSettingsAndApply() {
+        guard let userId = SupabaseService.shared.userId else { return }
+        
         Task {
             do {
-                _ = try await SettingsManager.shared.loadSettings()
+                let settings = try await QuoteRepository.shared.fetchSettings(userId: userId)
                 DispatchQueue.main.async {
                     self.applySettings()
+                    // Schedule notifications if enabled
+                    if let settings = settings,
+                       let enabled = settings.notificationEnabled,
+                       enabled,
+                       let time = settings.notificationTime {
+                        NotificationService.shared.updateNotificationSchedule(enabled: true, time: time)
+                    } else {
+                        // Disable notifications if not enabled
+                        NotificationService.shared.updateNotificationSchedule(enabled: false, time: nil)
+                    }
                 }
             } catch {
                 print("Failed to load settings: \(error.localizedDescription)")

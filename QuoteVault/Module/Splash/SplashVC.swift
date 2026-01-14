@@ -10,11 +10,7 @@ import UIKit
 class SplashVC: UIViewController {
     
     /// Variable(s)
-    lazy var viewModel: SplashViewModel = {
-        let vm = SplashViewModel()
-        vm.delegate = self
-        return vm
-    }()
+   
     
     // MARK: - View life cycle
     override func viewDidLoad() {
@@ -37,12 +33,5 @@ class SplashVC: UIViewController {
                 Constants.appDelegate.redirectToLogin()
             }
         }
-    }
-}
-
-// MARK: - SplashViewModelDelegate Method
-extension SplashVC : SplashViewModelDelegate {
-    func errorOccurred(_ message: String, errorType: ErrorType, fieldType: ErrorFieldType) {
-        alertView(message: message)
     }
 }

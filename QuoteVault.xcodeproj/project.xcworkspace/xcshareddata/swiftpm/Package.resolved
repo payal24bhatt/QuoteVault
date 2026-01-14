@@ -1,15 +1,6 @@
 {
-  "originHash" : "41d37dc35864f3003dd3d97a2c5d9e59d59e1f2123707a6da07a115a37d0913c",
+  "originHash" : "a2ecc215b8e4891c1fa6eae5a5247685dc1f58c203f50c9b0fc097f488e5601b",
   "pins" : [
-    {
-      "identity" : "cryptoswift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/krzyzanowskim/CryptoSwift.git",
-      "state" : {
-        "revision" : "e45a26384239e028ec87fbcc788f513b67e10d8f",
-        "version" : "1.9.0"
-      }
-    },
     {
       "identity" : "iqkeyboardcore",
       "kind" : "remoteSourceControl",

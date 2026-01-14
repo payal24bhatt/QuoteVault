@@ -216,6 +216,7 @@ extension CollectionsVC: UITableViewDataSource, UITableViewDelegate {
         
         let vc = CollectionDetailVC.loadFromNib()
         vc.collection = collection
+        vc.hidesBottomBarWhenPushed = true // Hide tab bar when navigating
         navigationController?.pushViewController(vc, animated: true)
     }
     

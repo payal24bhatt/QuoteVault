@@ -14,6 +14,7 @@ import IQKeyboardToolbarManager
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    var pendingResetURL: URL?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
@@ -22,7 +23,38 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         IQKeyboardManager.shared.isEnabled = true
         IQKeyboardManager.shared.resignOnTouchOutside = true
         IQKeyboardManager.shared.enableAutoToolbar = true
+        
+        // Handle URL if app was launched from a URL
+        if let url = launchOptions?[.url] as? URL {
+            print("🔗 App launched with URL (AppDelegate): \(url.absoluteString)")
+            handleURL(url)
+        }
+        
         return true
+    }
+    
+    // Handle URL when app is already running (iOS 13+ uses SceneDelegate, but this is a fallback)
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        print("🔗 AppDelegate received URL: \(url.absoluteString)")
+        handleURL(url)
+        return true
+    }
+    
+    func handleURL(_ url: URL) {
+        if url.scheme == "quotevault" {
+            if url.host == "reset-password" {
+                print("✅ Detected reset password URL in AppDelegate")
+                // If window exists, navigate immediately
+                if let window = window {
+                    DispatchQueue.main.async {
+                        self.redirectToResetPassword(with: url)
+                    }
+                } else {
+                    // Store URL to use when window is ready
+                    pendingResetURL = url
+                }
+            }
+        }
     }
 
     // MARK: UISceneSession Lifecycle
@@ -152,5 +184,14 @@ extension AppDelegate {
     
     func redirectToHome() {
         self.setupNavigationController(rootController: TabBarVC())
+    }
+    
+    func redirectToResetPassword(with url: URL? = nil) {
+        print("🔗 redirectToResetPassword called with URL: \(url?.absoluteString ?? "nil")")
+        let resetVC = ResetPasswordVC.loadFromNib()
+        resetVC.resetURL = url
+        let nav = UINavigationController(rootViewController: resetVC)
+        nav.isNavigationBarHidden = false
+        self.setWindowRootViewController(rootVC: nav, animated: true, completion: nil)
     }
 }

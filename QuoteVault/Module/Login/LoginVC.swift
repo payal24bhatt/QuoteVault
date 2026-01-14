@@ -19,18 +19,12 @@ class LoginVC: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var btnPasswordShow: UIButton!
     
     /// Variable(s)
-    lazy var viewModel: LoginViewModel = {
-        viewModel = LoginViewModel()
-        viewModel.delegate = self
-        return viewModel
-    }()
     private var isPasswordVisible = false
     
     // MARK: - View life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         prepareUI()
-        prepareViewModel()
     }
 }
 
@@ -66,9 +60,6 @@ extension LoginVC {
         let imageName = txtPassword.isSecureTextEntry ? AppImages.showPassword.rawValue : AppImages.hidePassword.rawValue
     }
     
-    func prepareViewModel() {
-        // Prepare ViewModel Here
-    }
 }
 
 //MARK:- Action
@@ -76,7 +67,7 @@ extension LoginVC {
     
     @IBAction func onClickLogin(_ sender: UIButton) {
         self.view.endEditing(true)
-        viewModel.callLoginAPI(email: txtEmailId.text ?? "", password: txtPassword.text ?? "" )
+        callLoginAPI(email: txtEmailId.text ?? "", password: txtPassword.text ?? "")
     }
     
     @IBAction func onClickSignup(_ sender: UIButton) {
@@ -93,7 +84,7 @@ extension LoginVC {
 
         Task {
             do {
-                try await SupabaseService.shared.client.auth.resetPasswordForEmail(email)
+                try await SupabaseService.shared.client.auth.resetPasswordForEmail(email, redirectTo: URL(string: "quotevault://reset-password")!)
                 showAlert("Password reset email sent")
             } catch {
                 showAlert(error.localizedDescription)
@@ -117,11 +108,51 @@ extension LoginVC {
     }
 }
 
-// MARK: - LoginViewModelDelegate Method
-extension LoginVC : LoginViewModelDelegate {
+// MARK: - Login Methods
+extension LoginVC {
     
-    func errorOccurred(_ message: String, errorType: ErrorType, fieldType: ErrorFieldType) {
-        // Example: show alert
+    func callLoginAPI(email: String, password: String) {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // MARK: - Validations
+        guard !trimmedEmail.isEmpty else {
+            showError("Email is required", fieldType: .email)
+            return
+        }
+
+        guard trimmedEmail.isValidEmail else {
+            showError("Please enter a valid email", fieldType: .email)
+            return
+        }
+
+        guard !trimmedPassword.isEmpty else {
+            showError("Password is required", fieldType: .password)
+            return
+        }
+
+        // MARK: - SUPABASE LOGIN
+        Task {
+            do {
+                try await SupabaseService.shared.client.auth.signIn(
+                    email: trimmedEmail,
+                    password: trimmedPassword
+                )
+
+                // Success
+                DispatchQueue.main.async {
+                    Constants.appDelegate.redirectToHome()
+                }
+
+            } catch {
+                DispatchQueue.main.async {
+                    self.showError(error.localizedDescription, fieldType: .none)
+                }
+            }
+        }
+    }
+    
+    func showError(_ message: String, fieldType: ErrorFieldType) {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         self.present(alert, animated: true)
@@ -136,9 +167,6 @@ extension LoginVC : LoginViewModelDelegate {
             break
         }
     }
-    
-    func loginSuccess() {
-        Constants.appDelegate.redirectToHome()
-    }
 }
+
 

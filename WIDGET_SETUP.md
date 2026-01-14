@@ -32,7 +32,8 @@ This allows the widget to use the same Supabase client and models as the main ap
 
 1. In Xcode, go to **Product → Scheme → Manage Schemes**
 2. Ensure **QuoteVaultWidgetExtension** scheme exists
-3. Select it and click **Run** to test the widget
+3. Ensure QuoteVaultWidgetExtension target builds successfully.
+4. Widgets are tested by adding them to the Home Screen.
 
 ### Step 3: Add Widget to Home Screen
 
@@ -57,9 +58,9 @@ This allows the widget to use the same Supabase client and models as the main ap
 - Supports Small and Medium widget sizes
 
 ### 3. Deep Linking
-- Widget uses URL scheme: `quotevault://quoteoftheday`
-- When tapped, `SceneDelegate.handleWidgetURL()` is called
-- App navigates to home screen (which shows quote of the day)
+- Widget opens the app using URL scheme: `quotevault://home`
+- App handles this URL and navigates to Home screen
+- Home screen automatically shows the Quote of the Day
 
 ### 4. Daily Updates
 - Timeline policy set to `.after(tomorrow)` - updates at midnight
@@ -95,7 +96,8 @@ This allows the widget to use the same Supabase client and models as the main ap
 
 ### Deep linking doesn't work:
 - Verify URL scheme is in `Info.plist` (already added)
-- Check that `SceneDelegate.handleWidgetURL()` is called
+- The app handles widget URLs via AppDelegate / SceneDelegate (depending on iOS version)
+- Deep link routing navigates user to Home screen
 - Test URL manually: `quotevault://quoteoftheday`
 
 ## Notes

@@ -24,11 +24,11 @@ class HomeVC: UIViewController {
     var searchText: String?
     var searchAuthor: String?
     
-    lazy var viewModel: HomeViewModel = {
-        let vm = HomeViewModel()
-        vm.delegate = self
-        return vm
-    }()
+    // Pagination variables
+    private var currentPage = 0
+    private let pageSize = 20
+    private var isLoading = false
+    private var hasMore = true
     
     // MARK: - View life cycle
     override func viewDidLoad() {
@@ -210,19 +210,80 @@ extension HomeVC {
     }
     
     func fetchQuoteOfTheDay() {
-        viewModel.fetchQuoteOfTheDay()
+        Task {
+            do {
+                let quote = try await QuoteRepository.shared.fetchQuoteOfTheDay()
+                DispatchQueue.main.async {
+                    // Silently handle nil quote (no quotes in database yet)
+                    self.quoteOfTheDay = quote
+                    self.tblQuotes.reloadData()
+                }
+            } catch {
+                // Log error but don't show alert - quote of the day is non-critical
+                print("⚠️ Failed to fetch quote of the day: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    // Return nil instead of showing error - allows app to continue
+                    self.quoteOfTheDay = nil
+                    self.tblQuotes.reloadData()
+                }
+            }
+        }
     }
     
     func fetchQuotes(reset: Bool) {
+        guard !isLoading && (hasMore || reset) else { return }
+        
         if reset {
+            currentPage = 0
+            hasMore = true
             quotes.removeAll()
             tblQuotes.reloadData()
         }
+        
+        isLoading = true
+        
         // Only show activity indicator if we're resetting or if quotes list is empty
         if reset || quotes.isEmpty {
             activityIndicator.startAnimating()
         }
-        viewModel.fetchQuotes(reset: reset, categoryId: selectedCategoryId, searchText: searchText, author: searchAuthor)
+        
+        Task {
+            do {
+                let newQuotes = try await QuoteRepository.shared.fetchQuotes(
+                    limit: pageSize,
+                    offset: currentPage * pageSize,
+                    categoryId: selectedCategoryId,
+                    searchText: searchText,
+                    author: searchAuthor
+                )
+                
+                hasMore = newQuotes.count == pageSize
+                currentPage += 1
+                isLoading = false
+                
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    // Always stop activity indicator when quotes are fetched (even if empty)
+                    self.activityIndicator.stopAnimating()
+                    self.quotes.append(contentsOf: newQuotes)
+                    self.tblQuotes.reloadData()
+                }
+            } catch {
+                isLoading = false
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    // Always stop activity indicator on error
+                    self.activityIndicator.stopAnimating()
+                    // Only show error for critical failures (like fetching quotes list)
+                    // Quote of the day errors are handled silently
+                    if !error.localizedDescription.contains("quote of the day") {
+                        self.alertView(message: "Failed to fetch quotes: \(error.localizedDescription)")
+                    } else {
+                        print("⚠️ \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
     }
     
     @objc func refreshTableView() {
@@ -359,8 +420,16 @@ extension HomeVC {
             return
         }
         
-        QuoteCardGenerator.saveToPhotos(image: cardImage)
-        alertView(message: "Quote card saved to Photos!")
+        // Save to photos (will request permission if needed)
+        QuoteCardGenerator.saveToPhotos(image: cardImage) { [weak self] success, error in
+            DispatchQueue.main.async {
+                if success {
+                    self?.alertView(message: "Quote card saved to Photos!")
+                } else if let error = error {
+                    self?.alertView(message: "Failed to save: \(error.localizedDescription)")
+                }
+            }
+        }
     }
 }
 
@@ -439,40 +508,6 @@ extension HomeVC: UITableViewDataSource, UITableViewDelegate {
     }
 }
 
-// MARK: - HomeViewModelDelegate
-extension HomeVC: HomeViewModelDelegate {
-    func quotesFetched(_ newQuotes: [Quote]) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            // Always stop activity indicator when quotes are fetched (even if empty)
-            self.activityIndicator.stopAnimating()
-            self.quotes.append(contentsOf: newQuotes)
-            self.tblQuotes.reloadData()
-        }
-    }
-    
-    func quoteOfTheDayFetched(_ quote: Quote?) {
-        DispatchQueue.main.async { [weak self] in
-            self?.quoteOfTheDay = quote
-            self?.tblQuotes.reloadData()
-        }
-    }
-    
-    func errorOccurred(_ message: String) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            // Always stop activity indicator on error
-            self.activityIndicator.stopAnimating()
-            // Only show error for critical failures (like fetching quotes list)
-            // Quote of the day errors are handled silently
-            if !message.contains("quote of the day") {
-                self.alertView(message: message)
-            } else {
-                print("⚠️ \(message)")
-            }
-        }
-    }
-}
 
 // MARK: - UISearchBarDelegate
 extension HomeVC: UISearchBarDelegate {

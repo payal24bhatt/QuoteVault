@@ -94,12 +94,16 @@ struct UserSettings: Codable {
     let theme: String
     let fontSize: Int
     let accentColor: String
+    let notificationEnabled: Bool?
+    let notificationTime: String?
 
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case theme
         case fontSize = "font_size"
         case accentColor = "accent_color"
+        case notificationEnabled = "notification_enabled"
+        case notificationTime = "notification_time"
     }
 }
 

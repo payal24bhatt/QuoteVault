@@ -221,6 +221,24 @@ extension Notification.Name {
     static let notifyReloadDraftList  = Notification.Name("notifyReloadDraftList")
 }
 
+// MARK: - Error Types
+/// for manage validation field type
+enum ErrorFieldType {
+    case fname
+    case lname
+    case email
+    case password
+    case confirmPassword
+    case none
+    case dob
+}
+
+/// manage error type
+enum ErrorType {
+    case api
+    case system
+}
+
 extension Encodable {
 
     func toDictionary() -> [String: Any]? {
