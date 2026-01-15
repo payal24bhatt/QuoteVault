@@ -360,8 +360,9 @@ QuoteVault/
 
 This project was built using AI-assisted development with the following tools:
 
-- **Cursor AI** - Primary coding assistant for implementation
-- **ChatGPT (OpenAI)** 
+- Cursor AI (primary development environment)
+- Claude (via Cursor) — reasoning, debugging, refactoring
+- GitHub Copilot — code completion
 
 AI was used for:
 - Swift & iOS development guidance
@@ -494,6 +495,10 @@ END $$;
 - [ ] Edit profile name
 - [ ] Widget displays quote
 - [ ] Widget opens app on tap
+
+### TestFlight Build
+A TestFlight build is not provided as it requires a paid Apple Developer account.
+The app can be run directly via Xcode on a simulator or physical device.
 
 ## 📄 License
 
